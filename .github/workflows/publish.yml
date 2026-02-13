@@ -1,0 +1,51 @@
+name: Publish Schemas
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate tag
+        id: tag
+        run: echo "tag=$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_OUTPUT
+
+      - name: Create schemas.zip
+        run: |
+          mkdir -p schemas_tmp
+          find . -name '*.json' -not -path './.git/*' -exec cp --parents {} schemas_tmp/ \;
+          cd schemas_tmp
+          zip -r ../schemas.zip .
+          cd ..
+          rm -rf schemas_tmp
+
+      - name: Create domain zips
+        run: |
+          for dir in */; do
+            domain="${dir%/}"
+            if [ "$domain" != ".github" ]; then
+              cd "$domain"
+              zip -r "../${domain}.zip" .
+              cd ..
+            fi
+          done
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          files: |
+            schemas.zip
+            *.zip
+          generate_release_notes: true
