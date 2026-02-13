@@ -21,7 +21,7 @@ jobs:
         run: echo "tag=$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_OUTPUT
 
       - name: Create schemas.zip
-        run: find . -name '*.json' -not -path './.git/*' | zip -@ schemas.zip
+        run: find . -name '*.json' -not -path './.git/*' -not -path './.github/*' | zip -@ schemas.zip
 
       - name: Create domain zips
         run: |
